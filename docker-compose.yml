@@ -1,0 +1,28 @@
+services:
+  frontend:
+    build:
+      context: ./frontend
+    restart: always
+    networks:
+      - ytdl
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.bot.rule=(Host(`${HOST}`))"
+      - "traefik.http.routers.bot.entrypoints=websecure"
+      - "traefik.http.routers.bot.tls.certresolver=myresolver"
+
+  backend:
+    build:
+      context: ./backend
+    restart: always
+    networks:
+      - ytdl
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.bot.rule=(Host(`${HOST}`) && PathPrefix(`/api`))"
+      - "traefik.http.routers.bot.entrypoints=websecure"
+      - "traefik.http.routers.bot.tls.certresolver=myresolver"
+
+networks:
+  ytdl:
+    external: true
