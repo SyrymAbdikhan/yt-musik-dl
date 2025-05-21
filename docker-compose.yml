@@ -10,6 +10,7 @@ services:
       - "traefik.http.routers.ytdl-frontend.rule=(Host(`${HOST}`))"
       - "traefik.http.routers.ytdl-frontend.entrypoints=websecure"
       - "traefik.http.routers.ytdl-frontend.tls.certresolver=myresolver"
+      - "traefik.http.services.ytdl-frontend.loadbalancer.server.port=3000"
 
   backend:
     build:
