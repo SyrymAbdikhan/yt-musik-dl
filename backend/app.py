@@ -6,6 +6,9 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
+from dotenv import load_dotenv
+load_dotenv(override=True)
+
 from utils.helper import process_request, get_file_info
 
 logging.basicConfig(
@@ -18,15 +21,11 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI()
 
-origins = [
-    'http://localhost',
-    'http://localhost:8000',
-    'http://localhost:5173',
-]
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=[
+        os.getenv('ALLOW_ORIGIN', 'http://localhost:5173'),
+    ],
     allow_credentials=True,
     allow_methods=['GET', 'POST'],
     allow_headers=['*'],
