@@ -7,9 +7,9 @@ services:
       - ytdl
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.bot.rule=(Host(`${HOST}`))"
-      - "traefik.http.routers.bot.entrypoints=websecure"
-      - "traefik.http.routers.bot.tls.certresolver=myresolver"
+      - "traefik.http.routers.ytdl.rule=(Host(`${HOST}`))"
+      - "traefik.http.routers.ytdl.entrypoints=websecure"
+      - "traefik.http.routers.ytdl.tls.certresolver=myresolver"
 
   backend:
     build:
@@ -19,9 +19,9 @@ services:
       - ytdl
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.bot.rule=(Host(`${HOST}`) && PathPrefix(`/api`))"
-      - "traefik.http.routers.bot.entrypoints=websecure"
-      - "traefik.http.routers.bot.tls.certresolver=myresolver"
+      - "traefik.http.routers.ytdl.rule=(Host(`${HOST}`) && PathPrefix(`/api`))"
+      - "traefik.http.routers.ytdl.entrypoints=websecure"
+      - "traefik.http.routers.ytdl.tls.certresolver=myresolver"
 
 networks:
   ytdl:
