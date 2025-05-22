@@ -1,5 +1,4 @@
 import os
-import sys
 import re
 import uuid
 import logging
@@ -40,9 +39,9 @@ async def download_youtube(url: str, destination: str) -> dict:
     filepath = os.path.join(destination, f"{file_id}.mp3")
 
     command = [
-        sys.executable,
-        "-m",
-        "yt_dlp",
+        "poetry",
+        "run",
+        "yt-dlp",
         "--extract-audio",
         "--audio-format",
         "mp3",
