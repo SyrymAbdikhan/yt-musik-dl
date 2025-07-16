@@ -1,13 +1,14 @@
 import os
 import logging
 
-from fastapi import APIRouter, HTTPException, status, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from fastapi.responses import FileResponse, JSONResponse
 
+from auth.auth_handler import get_current_user
 from schemas import ProcessRequest
 from utils.helper import process_request, get_file_info
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(get_current_user)])
 logger = logging.getLogger(__name__)
 
 MEDIA_FOLDER = os.getenv("MEDIA_FOLDER", "./media")

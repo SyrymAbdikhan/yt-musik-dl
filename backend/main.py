@@ -4,10 +4,10 @@ import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from routes import music
-
 from dotenv import load_dotenv
 load_dotenv(override=True)
+
+from routes import api, auth
 
 logging.basicConfig(
     encoding='utf-8',
@@ -28,4 +28,5 @@ app.add_middleware(
     allow_headers=['*'],
 )
 
-app.include_router(music.router, prefix='/api')
+app.include_router(api.router, prefix='/api')
+app.include_router(auth.router, prefix='/auth')
