@@ -1,0 +1,29 @@
+services:
+  frontend:
+    build:
+      context: ./frontend
+    restart: always
+    networks:
+      - ytdl
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.ytdl-frontend.rule=(Host(`${HOST}`))"
+      - "traefik.http.routers.ytdl-frontend.entrypoints=websecure"
+      - "traefik.http.routers.ytdl-frontend.tls.certresolver=myresolver"
+      - "traefik.http.services.ytdl-frontend.loadbalancer.server.port=3000"
+
+  backend:
+    build:
+      context: ./backend
+    restart: always
+    networks:
+      - ytdl
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.ytdl-backend.rule=(Host(`${HOST}`) && PathPrefix(`/api`))"
+      - "traefik.http.routers.ytdl-backend.entrypoints=websecure"
+      - "traefik.http.routers.ytdl-backend.tls.certresolver=myresolver"
+
+networks:
+  ytdl:
+    external: true
