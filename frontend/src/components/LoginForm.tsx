@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react";
 import axios from "axios";
+import Cookies from "js-cookie";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -10,11 +11,11 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import {
   Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
+  CardDescription,
+  CardContent,
+  CardFooter,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
@@ -26,29 +27,25 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Spinner } from "@/components/ui/spinner";
-import {
-  Alert,
-  AlertDescription,
-  AlertTitle,
-} from "@/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 
 const formSchema = z.object({
-  url: z
+  username: z
     .string()
-    .min(1, { message: "URL is required" })
-    .url({ message: "Invalid URL" }),
-  artist: z
+    .min(1, { message: "Username is required" })
+    .max(50, { message: "Username must be less than 50 characters" }),
+  password: z
     .string()
-    .min(1, { message: "Artist is required" })
-    .max(100, { message: "Artist must be less than 100 characters" }),
-  title: z
-    .string()
-    .min(1, { message: "Title is required" })
-    .max(100, { message: "Title must be less than 100 characters" }),
+    .min(1, { message: "Password is required" })
+    .max(100, { message: "Password must be less than 100 characters" }),
 });
 
-function CardForm() {
+interface LoginFormProps {
+  onLogin?: () => void;
+}
+
+export function LoginForm({ onLogin }: LoginFormProps) {
   const formRef = useRef<HTMLFormElement>(null);
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState("");
@@ -56,34 +53,32 @@ function CardForm() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      url: "",
-      artist: "",
-      title: "",
+      username: "",
+      password: "",
     },
   });
 
   function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
-
     setError("");
     setProcessing(true);
 
-    axios.post(`${import.meta.env.VITE_API_URL}/process`, values)
+    axios
+      .post(`${import.meta.env.VITE_API_URL}/auth/token`, values, {
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded"
+        }
+      })
       .then((resp) => {
-        console.log(resp);
-
-        const downloadUrl = `${import.meta.env.VITE_API_URL}/download/${resp.data.file_id}`;
-        const link = document.createElement('a');
-        link.href = downloadUrl;
-        var parent = document.body;
-        if (formRef.current) {parent = formRef.current}
-        parent.appendChild(link);
-        link.click();
-        parent.removeChild(link);
+        Cookies.set("token", resp.data.access_token);
+        if (onLogin) onLogin();
       })
       .catch((error) => {
-        setError(error.response?.data.detail);
         console.log(error);
+        if (error.response.status == 401) {
+          setError("Failed to sign in. Please try again.")
+        } else {
+          setError("Unknown error occured. Please contact the developer.")
+        }
       })
       .finally(() => {
         setProcessing(false);
@@ -93,14 +88,14 @@ function CardForm() {
   return (
     <Card className="w-[350px] min-w-[250px]">
       <CardHeader className="text-center">
-        <CardTitle className="text-2xl">Download Audio</CardTitle>
+        <CardTitle className="text-2xl">Welcome</CardTitle>
         <CardDescription>
-          Download mp3 file (128kbps) from youtube
+          Only staff allowed to login
         </CardDescription>
         {error && (
           <Alert variant="destructive" className="text-left">
             <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Error</AlertTitle>
+            {/* <AlertTitle>Error</AlertTitle> */}
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         )}
@@ -111,12 +106,12 @@ function CardForm() {
             <div className="grid w-full items-center gap-4">
               <FormField
                 control={form.control}
-                name="url"
+                name="username"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Youtube URL</FormLabel>
+                    <FormLabel>Username</FormLabel>
                     <FormControl>
-                      <Input placeholder="https://youtube.com ..." {...field} />
+                      <Input placeholder="Kodak" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -124,25 +119,12 @@ function CardForm() {
               />
               <FormField
                 control={form.control}
-                name="artist"
+                name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Artist</FormLabel>
+                    <FormLabel>Password</FormLabel>
                     <FormControl>
-                      <Input placeholder="Daniel Caesar ..." {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="title"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Title</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Get You ..." {...field} />
+                      <Input placeholder="secure" {...field} type="password" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -151,16 +133,14 @@ function CardForm() {
             </div>
 
             <Button disabled={processing} className="w-full mt-6" type="submit">
-              Download
+              Login
             </Button>
           </form>
         </Form>
       </CardContent>
       <CardFooter className={`flex justify-center ${!processing && "hidden"}`}>
-        <Spinner size="medium">Processing...</Spinner>
+        <Spinner size="medium" />
       </CardFooter>
     </Card>
   );
 }
-
-export { CardForm };
