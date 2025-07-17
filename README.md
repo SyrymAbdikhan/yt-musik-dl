@@ -21,6 +21,7 @@ modifies file metadata, pasting custom artist and music title.
 - [Python 3.12](https://www.python.org/downloads/) or newer
 - [npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
 - [Docker](https://docs.docker.com/desktop/) (optional)
+- [FFmpeg](https://github.com/eugeneware/ffmpeg-static?tab=readme-ov-file#sources-of-the-binaries)
 
 ## Installation
 
@@ -32,6 +33,11 @@ $ cd yt-musik-dl
 ```
 
 Copy and rename all `.env.example` files to `.env` and fill in the required data.
+
+**IMPORTANT**: if you are running without Docker and not using Linux OS,
+please download [FFmpeg binaries](https://github.com/eugeneware/ffmpeg-static?tab=readme-ov-file#sources-of-the-binaries)
+of your OS and replace existing ones in `./backend/utils/` folder, as source
+code has only debian binaries.
 
 ### Backend
 
