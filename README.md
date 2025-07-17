@@ -1,4 +1,4 @@
-# Youtube Music DL • ![License](https://img.shields.io/badge/license-MIT-blue.svg)
+# Youtube Music Downloader • ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 
 This project is about downloading music (or audio) from youtube. It also
 modifies file metadata, pasting custom artist and music title.
