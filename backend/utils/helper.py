@@ -4,12 +4,18 @@ import uuid
 import logging
 import asyncio
 
+from typing import Any
+
 from mutagen.mp3 import MP3
 from mutagen.id3 import TPE1, TIT2
 
 from werkzeug.utils import secure_filename
 
 logger = logging.getLogger(__name__)
+
+ffmpeg_path = os.getenv("FFMPEG_PATH")
+cookies_path = os.getenv("COOKIES_PATH")
+audio_qualities = {"48K", "128K", "256K"}
 
 file_infos = {}
 
@@ -28,7 +34,7 @@ async def process_request(
         return None, error
 
     download_name = get_download_name(artist, title)
-    file_info["download_name"] = download_name
+    file_info["download_name"] = download_name + ".mp3"
 
     file_infos[file_info["file_id"]] = file_info.copy()
     return file_info["file_id"], None
@@ -38,25 +44,7 @@ async def download_youtube(url: str, destination: str) -> dict:
     file_id = uuid.uuid4().hex
     filepath = os.path.join(destination, f"{file_id}.mp3")
 
-    command = [
-        "poetry",
-        "run",
-        "yt-dlp",
-        "--extract-audio",
-        "--audio-format",
-        "mp3",
-        "--audio-quality",
-        "128K",
-        "--no-playlist",
-        "--no-warnings",
-        "--quiet",
-        "--ffmpeg-location",
-        "./utils/",
-        "-o",
-        filepath,
-        url,
-    ]
-
+    command = construct_command(url, filepath)
     try:
         process = await asyncio.create_subprocess_exec(
             *command, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
@@ -85,6 +73,38 @@ async def download_youtube(url: str, destination: str) -> dict:
     return {"filepath": filepath, "file_id": file_id}
 
 
+def construct_command(
+    url: str, filepath: str, quality: str | int = "128K"
+) -> list[str]:
+    quality = get_valid(quality, audio_qualities, "128K")
+    command = [
+        "poetry",
+        "run",
+        "yt-dlp",
+        "--extract-audio",
+        "--audio-format",
+        "mp3",
+        "--audio-quality",
+        quality,
+        "--no-playlist",
+        "--no-warnings",
+        "--quiet",
+    ]
+
+    if ffmpeg_path:
+        command.extend(["--ffmpeg-location", ffmpeg_path])
+
+    if cookies_path:
+        command.extend(["--cookies", cookies_path])
+
+    command.extend([
+        "-o",
+        filepath,
+        url,
+    ])
+    return command
+
+
 def update_metadata(filepath: str, artist: str, title: str) -> str | None:
     try:
         audio = MP3(filepath)
@@ -108,18 +128,24 @@ def update_metadata(filepath: str, artist: str, title: str) -> str | None:
     return None
 
 
+def get_valid(target: Any, options: list[Any], default: Any = None) -> Any:
+    if target in options:
+        return target
+    return default
+
+
 def get_download_name(artist: str, title: str) -> str:
     clean_title = sanitize(title)
     clean_artist = sanitize(artist)
 
     if clean_title and clean_artist:
-        download_name = f"{clean_title}_by_{clean_artist}.mp3"
+        download_name = f"{clean_title}_by_{clean_artist}"
     elif clean_title:
-        download_name = f"{clean_title}.mp3"
+        download_name = f"{clean_title}"
     elif clean_artist:
-        download_name = f"music_by_{clean_artist}.mp3"
+        download_name = f"music_by_{clean_artist}"
     else:
-        download_name = f"music.mp3"
+        download_name = f"music"
 
     return secure_filename(download_name)
 
