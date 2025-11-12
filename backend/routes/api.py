@@ -6,7 +6,7 @@ from fastapi.responses import FileResponse, JSONResponse
 
 from auth.auth_handler import get_current_user
 from schemas import ProcessRequest
-from utils.helper import process_request, get_file_info
+from utils.downloader import process_request, get_file_info
 
 router = APIRouter(dependencies=[Depends(get_current_user)])
 logger = logging.getLogger(__name__)
@@ -19,17 +19,14 @@ os.makedirs(MEDIA_FOLDER, exist_ok=True)
 async def api_process(data: ProcessRequest):
     logger.info(f"Received process request: {data.url}")
 
-    if not data.url.startswith("https"):
+    if not data.url.startswith("http"):
         logger.warning(f"Invalid URL format received: {data.url}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid YouTube link format. URL must start with https",
         )
 
-    file_id, error = await process_request(
-        data.url, data.artist, data.title, MEDIA_FOLDER
-    )
-
+    file_id, error = await process_request(data, MEDIA_FOLDER)
     if error:
         logger.error(f"Processing failed for {data.url}: {error}")
         raise HTTPException(
@@ -52,9 +49,9 @@ async def api_download(file_id: str, background_tasks: BackgroundTasks):
 
     filepath = file_info["filepath"]
     download_name = file_info["download_name"]
-    logger.info(f'Serving file for {file_id=}: filepath="{filepath}"')
+    logger.info(f"Serving file for {file_id=}: {filepath=} {download_name=}")
 
     # Schedule file cleanup after sending
     background_tasks.add_task(os.remove, filepath)
 
-    return FileResponse(path=filepath, filename=download_name, media_type="audio/mpeg")
+    return FileResponse(path=filepath, filename=download_name)
