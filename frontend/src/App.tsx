@@ -16,7 +16,7 @@ function App() {
   const [token, setToken] = useState("");
   
   const readCookie = () => {
-    let new_token = Cookies.get("token");
+    const new_token = Cookies.get("token");
     if (new_token) {
       setLoggedin(true);
       setToken(new_token);

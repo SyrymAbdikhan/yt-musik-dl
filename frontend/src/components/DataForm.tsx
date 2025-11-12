@@ -38,14 +38,23 @@ const formSchema = z.object({
     .string()
     .min(1, { message: "URL is required" })
     .url({ message: "Invalid URL" }),
-  artist: z
-    .string()
-    .min(1, { message: "Artist is required" })
-    .max(100, { message: "Artist must be less than 100 characters" }),
-  title: z
-    .string()
-    .min(1, { message: "Title is required" })
-    .max(100, { message: "Title must be less than 100 characters" }),
+  metadata: z.object({
+    artist: z
+      .string()
+      .min(1, { message: "Artist is required" })
+      .max(100, { message: "Artist must be less than 100 characters" })
+      .optional()
+      .or(z.literal('')),
+    title: z
+      .string()
+      .min(1, { message: "Title is required" })
+      .max(100, { message: "Title must be less than 100 characters" })
+      .optional()
+      .or(z.literal('')),
+  }),
+  dl_opts: z.object({
+    // TODO: add download options
+  }),
 });
 
 interface DataFormProps {
@@ -61,13 +70,16 @@ export function DataForm({ token }: DataFormProps) {
     resolver: zodResolver(formSchema),
     defaultValues: {
       url: "",
-      artist: "",
-      title: "",
+      metadata: {
+        artist: "",
+        title: "",
+      },
+      dl_opts: {}
     },
   });
 
   function downloadFile(url: string) {
-    var filename: string;
+    let filename: string;
     axios.get(url, {
       headers: { Authorization: `Bearer ${token}` },
       responseType: 'blob'
@@ -83,8 +95,8 @@ export function DataForm({ token }: DataFormProps) {
       return response.data;
    })
    .then(blob => {
-      var url = window.URL.createObjectURL(blob);
-      var a = document.createElement('a');
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
       a.href = url;
       a.download = filename;
       document.body.appendChild(a);
@@ -116,7 +128,9 @@ export function DataForm({ token }: DataFormProps) {
         // parent.removeChild(link);
       })
       .catch((error) => {
-        setError(error.response?.data.detail);
+        const details = error.response?.data.detail;
+        // if (details.prop && details.prop.constructor === Array)
+        setError(details);
         console.log(error);
       })
       .finally(() => {
@@ -158,7 +172,7 @@ export function DataForm({ token }: DataFormProps) {
               />
               <FormField
                 control={form.control}
-                name="artist"
+                name="metadata.artist"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Artist</FormLabel>
@@ -171,7 +185,7 @@ export function DataForm({ token }: DataFormProps) {
               />
               <FormField
                 control={form.control}
-                name="title"
+                name="metadata.title"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Title</FormLabel>
