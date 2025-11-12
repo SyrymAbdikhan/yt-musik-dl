@@ -1,0 +1,22 @@
+services:
+  frontend:
+    build:
+      context: ./frontend
+    restart: always
+    networks:
+      - ytdl
+    ports:
+      - "3000:3000"
+
+  backend:
+    build:
+      context: ./backend
+    restart: always
+    networks:
+      - ytdl
+    ports:
+      - "8000:8000"
+
+networks:
+  ytdl:
+    external: true
