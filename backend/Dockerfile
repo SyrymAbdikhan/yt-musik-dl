@@ -4,6 +4,7 @@ WORKDIR /app
 
 COPY pyproject.toml .
 
+RUN apt-get -y update && apt-get -y upgrade && apt-get install -y ffmpeg
 RUN pip install poetry
 RUN poetry install
 
