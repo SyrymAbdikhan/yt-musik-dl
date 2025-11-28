@@ -113,7 +113,7 @@ export default function Auth() {
     <div className="h-full flex justify-center items-center">
       <Card className="max-w-sm w-full">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl">Welcome</CardTitle>
+          <CardTitle className="text-2xl">Login</CardTitle>
           <CardDescription>Only staff allowed to login</CardDescription>
         </CardHeader>
         <CardContent>
