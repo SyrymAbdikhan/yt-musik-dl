@@ -7,8 +7,8 @@ class DownloadOptions(BaseModel):
 
 
 class Metadata(BaseModel):
-    artist: str = None
-    title: str = None
+    artist: str
+    title: str
 
 
 class ProcessRequest(BaseModel):

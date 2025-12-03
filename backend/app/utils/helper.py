@@ -19,7 +19,7 @@ def rename_file(src: str, dst: str, overwrite: bool = True) -> None:
     if not src or not os.path.exists(src):
         return
 
-    if not dst or os.path.exists(dst) and overwrite:
+    if not dst or (os.path.exists(dst) and not overwrite):
         return
 
     try:
@@ -29,5 +29,7 @@ def rename_file(src: str, dst: str, overwrite: bool = True) -> None:
 
 
 def sanitize(string: str) -> str:
+    if string is None:
+        return ""
     cleaned = re.sub(r'[<>:"/\\|?*]', "", string)
     return cleaned.strip()

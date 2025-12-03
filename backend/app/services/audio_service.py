@@ -1,21 +1,26 @@
 import os
 import uuid
 import logging
+from typing import Any
 from werkzeug.utils import secure_filename
 
-from schemas import ProcessRequest
-from utils.helper import cleanup, sanitize
+from app.schemas.audio import ProcessRequest
+from app.utils.helper import cleanup, sanitize
 
 from yt_dlp import YoutubeDL
 
 logger = logging.getLogger(__name__)
 
-file_infos = {}
+# TODO: replace this
+file_infos: dict[str, dict[str, Any]] = {}
 
 
 async def process_request(
     data: ProcessRequest, output_folder: str = "."
 ) -> tuple[str | None, str | None]:
+    # ensure media folder exists
+    os.makedirs(output_folder, exist_ok=True)
+
     file_info = await download_youtube(
         url=data.url,
         output_folder=output_folder,
@@ -39,12 +44,12 @@ async def download_youtube(
     output_folder: str = ".",
     metadata: dict[str, str] | None = None,
     dl_opts: dict[str, str] | None = None,
-) -> dict:
+) -> dict[str, Any]:
     file_id = uuid.uuid4().hex
     filepath_tmpl = os.path.join(output_folder, f"{file_id}.%(ext)s")
     filepath = None
 
-    ydl_opts = get_options(filepath_tmpl, metadata=metadata, **dl_opts)
+    ydl_opts = get_options(filepath_tmpl, metadata=metadata, **(dl_opts or {}))
     try:
         with YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=True)
@@ -57,7 +62,7 @@ async def download_youtube(
         cleanup(filepath)
         return {"error": error}
 
-    if not os.path.exists(filepath) or os.path.getsize(filepath) == 0:
+    if not filepath or not os.path.exists(filepath) or os.path.getsize(filepath) == 0:
         error = "Output file was not created or is empty"
         logger.error(f"{error} {url=}")
         cleanup(filepath)
@@ -75,7 +80,7 @@ def get_options(
     cookie_source: str | None = None,
     quiet: bool = True,
     **_,
-) -> dict:
+) -> dict[str, Any]:
     ydl_opts = {
         "format": "bestaudio/best",
         "outtmpl": {"default": f"{filepath}"},
@@ -94,13 +99,14 @@ def get_options(
     extract_details = {"key": "FFmpegExtractAudio"}
     if codec != "best":  # TODO: validate codecs
         extract_details["preferredcodec"] = codec
-    if bitrate != "best" and bitrate.isnumeric():  # TODO: validate bitrate
+    if bitrate != "best" and isinstance(bitrate, int):  # TODO: validate bitrate
         extract_details["preferredquality"] = bitrate
     ydl_opts["postprocessors"].append(extract_details)
 
     metadata_details = []
-    for key, value in metadata.items():
-        metadata_details += ["-metadata", f"{key}={value}"]
+    if metadata:
+        for key, value in metadata.items():
+            metadata_details += ["-metadata", f"{key}={value}"]
     ydl_opts["postprocessor_args"] += metadata_details
 
     if cookie_source:
@@ -109,7 +115,7 @@ def get_options(
     return ydl_opts
 
 
-def get_file_info(file_id: str) -> dict:
+def get_file_info(file_id: str) -> dict[str, Any]:
     try:
         file_info = file_infos.pop(file_id, None)
 
@@ -117,8 +123,8 @@ def get_file_info(file_id: str) -> dict:
             logger.warning(f"No download info found for {file_id=}")
             return {"error": "Invalid file ID"}
 
-        filepath = file_info["filepath"]
-        if not os.path.exists(filepath):
+        filepath = file_info.get("filepath", "")
+        if not filepath or not os.path.exists(filepath):
             logger.error(f"Missing {filepath=} for {file_id=}")
             return {"error": "File not found"}
 
@@ -128,7 +134,7 @@ def get_file_info(file_id: str) -> dict:
         return {"error": "Unexpected error occured"}
 
 
-def get_download_name(artist: str, title: str) -> str:
+def get_download_name(artist: str | None, title: str | None) -> str:
     clean_title = sanitize(title)
     clean_artist = sanitize(artist)
 
