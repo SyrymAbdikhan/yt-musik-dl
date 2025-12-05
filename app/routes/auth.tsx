@@ -48,7 +48,7 @@ export async function action({ request }: Route.ActionArgs) {
   const params = new URLSearchParams(data as Record<string, string>);
 
   try {
-    const response = await fetch(`${API_URL}/api/auth/token`, {
+    const response = await fetch(`${API_URL}/api/v1/auth/token`, {
       method: "POST",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
