@@ -54,31 +54,27 @@ export async function loader({ request }: Route.LoaderArgs) {
   // checking if there are any auth token
   if (!token) { return; }
 
-  try {
-    // validating the auth token
-    const res = await fetch(`${API_URL}/api/v1/auth/me`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+  // validating the auth token
+  const res = await fetch(`${API_URL}/api/v1/auth/me`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
 
-    // if valid then redirect
-    if (res.ok) {
-      return redirect("/app");
-    }
+  // if valid then redirect
+  if (res.ok) { return redirect("/app"); }
 
-    // else remove the auth token
-    const headers = new Headers();
-    headers.append("Set-Cookie", await destroySession(session));
+  // else remove the auth token
+  const headers = new Headers();
+  headers.append("Set-Cookie", await destroySession(session));
 
-    return new Response(JSON.stringify({ loggedOut: true }), {
-      status: 200,
-      headers: {
-        "Content-Type": "application/json",
-        "Set-Cookie": headers.get("Set-Cookie")!,
-      },
-    });
-  } catch { return; }
+  return new Response(JSON.stringify({ loggedOut: true }), {
+    status: 200,
+    headers: {
+      "Content-Type": "application/json",
+      "Set-Cookie": headers.get("Set-Cookie")!,
+    },
+  });
 }
 
 export async function action({ request }: Route.ActionArgs) {
