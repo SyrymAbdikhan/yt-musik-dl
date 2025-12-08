@@ -47,10 +47,13 @@ type ActionData = {
   fieldErrors?: Partial<Record<keyof LoginFormData, string>>;
 };
 
-export async function loader({ request }: Route.LoaderArgs) {
-  const session = await getSession(request.headers.get("Cookie"));
-  const token = session.get("authToken");
+async function getCookies(request: Request) {
+  return await getSession(request.headers.get("Cookie"));
+}
 
+export async function loader({ request }: Route.LoaderArgs) {
+  const session = await getCookies(request);
+  const token = session.get("authToken");
   // checking if there are any auth token
   if (!token) {
     return;
@@ -72,7 +75,6 @@ export async function loader({ request }: Route.LoaderArgs) {
 
   // else remove the auth token
   const setCookie = await destroySession(session);
-
   return new Response(JSON.stringify({ loggedOut: true }), {
     status: 200,
     headers: {
@@ -83,11 +85,9 @@ export async function loader({ request }: Route.LoaderArgs) {
 }
 
 export async function action({ request }: Route.ActionArgs) {
-  const formData = await request.formData();
-  const raw = Object.fromEntries(formData);
+  const data = await request.json();
   // validating form data
-  const parsed = loginSchema.safeParse(raw);
-
+  const parsed = loginSchema.safeParse(data);
   // if data is invalid
   if (!parsed.success) {
     const { fieldErrors } = parsed.error.flatten((issue) => issue.message);
@@ -99,12 +99,11 @@ export async function action({ request }: Route.ActionArgs) {
     } satisfies ActionData;
   }
 
-  const { username, password } = parsed.data;
-
   try {
+    // preparing data to send
     const params = new URLSearchParams();
-    params.set("username", username);
-    params.set("password", password);
+    params.set("username", parsed.data.username);
+    params.set("password", parsed.data.password);
 
     // requesting auth token
     const response = await fetch(`${API_URL}/api/v1/auth/token`, {
@@ -125,9 +124,8 @@ export async function action({ request }: Route.ActionArgs) {
     }
 
     // setting the token
-    const session = await getSession(request.headers.get("Cookie"));
+    const session = await getCookies(request);
     session.set("authToken", result.access_token);
-
     // redirecting and passing the headers
     return redirect("/app", {
       headers: {
@@ -170,7 +168,10 @@ export default function Auth() {
 
   const onSubmit = (data: LoginFormData) => {
     form.clearErrors();
-    submit(data, { method: "post" });
+    submit(JSON.stringify(data), {
+      method: "post",
+      encType: "application/json",
+    });
   };
 
   return (
