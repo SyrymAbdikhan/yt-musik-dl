@@ -3,7 +3,6 @@ from fastapi.responses import FileResponse, JSONResponse
 
 from app.core.config import config
 from app.core.exceptions import (
-    BadRequestException,
     NotFoundException,
     UnexpectedException,
 )
@@ -17,11 +16,6 @@ router = APIRouter(prefix="/audio", dependencies=[Depends(get_current_user)])
 
 @router.post("/process")
 async def api_process(data: ProcessRequest):
-    if not data.url.startswith("https"):
-        raise BadRequestException(
-            "Invalid YouTube link format. URL must start with https"
-        )
-
     file_id, error = await audio_service.process_request(data, config.media_folder)
     if error:
         raise UnexpectedException(error)

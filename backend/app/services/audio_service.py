@@ -20,6 +20,9 @@ async def process_request(
 ) -> tuple[str | None, str | None]:
     # ensure media folder exists
     os.makedirs(output_folder, exist_ok=True)
+    # TODO: proper youtube link validation
+    if not data.url.startswith("https"):
+        return None, "Invalid YouTube link format. URL must start with https"
 
     file_info = await download_youtube(
         url=data.url,
