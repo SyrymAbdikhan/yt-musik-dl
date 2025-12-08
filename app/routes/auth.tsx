@@ -56,27 +56,28 @@ export async function loader({ request }: Route.LoaderArgs) {
     return;
   }
 
-  // validating the auth token
-  const res = await fetch(`${API_URL}/api/v1/auth/me`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
+  try {
+    // validating the auth token
+    const res = await fetch(`${API_URL}/api/v1/auth/me`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
 
-  // if valid then redirect
-  if (res.ok) {
-    return redirect("/app");
-  }
+    // if valid then redirect
+    if (res.ok) {
+      return redirect("/app");
+    }
+  } catch (err) {}
 
   // else remove the auth token
-  const headers = new Headers();
-  headers.append("Set-Cookie", await destroySession(session));
+  const setCookie = await destroySession(session);
 
   return new Response(JSON.stringify({ loggedOut: true }), {
     status: 200,
     headers: {
       "Content-Type": "application/json",
-      "Set-Cookie": headers.get("Set-Cookie")!,
+      "Set-Cookie": setCookie,
     },
   });
 }
