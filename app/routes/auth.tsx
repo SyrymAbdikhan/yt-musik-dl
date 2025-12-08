@@ -45,14 +45,16 @@ type LoginFormData = z.infer<typeof loginSchema>;
 type ActionData = {
   formError?: string;
   fieldErrors?: Partial<Record<keyof LoginFormData, string>>;
-}
+};
 
 export async function loader({ request }: Route.LoaderArgs) {
   const session = await getSession(request.headers.get("Cookie"));
   const token = session.get("authToken");
 
   // checking if there are any auth token
-  if (!token) { return; }
+  if (!token) {
+    return;
+  }
 
   // validating the auth token
   const res = await fetch(`${API_URL}/api/v1/auth/me`, {
@@ -62,7 +64,9 @@ export async function loader({ request }: Route.LoaderArgs) {
   });
 
   // if valid then redirect
-  if (res.ok) { return redirect("/app"); }
+  if (res.ok) {
+    return redirect("/app");
+  }
 
   // else remove the auth token
   const headers = new Headers();
@@ -90,7 +94,7 @@ export async function action({ request }: Route.ActionArgs) {
       fieldErrors: {
         username: fieldErrors.username?.[0],
         password: fieldErrors.password?.[0],
-      }
+      },
     } satisfies ActionData;
   }
 
@@ -115,7 +119,7 @@ export async function action({ request }: Route.ActionArgs) {
     if (!response.ok) {
       return {
         formError: result.detail || "Login failed",
-        fieldErrors: result.errors
+        fieldErrors: result.errors,
       } satisfies ActionData;
     }
 
