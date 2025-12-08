@@ -4,13 +4,9 @@ import { useEffect } from "react";
 import type { Route } from "./+types/auth";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  useNavigation,
-  useSubmit,
-  useActionData,
-} from "react-router";
+import { useNavigation, useSubmit, useActionData } from "react-router";
 import { useForm } from "react-hook-form";
-// import { getSession } from "~/sessions";
+import { destroySession, getSession } from "~/sessions";
 
 import {
   Card,
@@ -21,7 +17,7 @@ import {
 } from "~/components/ui/card";
 import { Alert, AlertDescription } from "~/components/ui/alert";
 import {
-  Form,
+  Form as UiForm,
   FormField,
   FormItem,
   FormLabel,
@@ -48,6 +44,45 @@ const requestSchema = z.object({
 
 type RequestFormData = z.infer<typeof requestSchema>;
 
+type ActionData = {
+  formError?: string;
+  fieldErrors?: Partial<Record<keyof RequestFormData, string>>;
+};
+
+export async function loader({ request }: Route.LoaderArgs) {
+  const session = await getSession(request.headers.get("Cookie"));
+  const token = session.get("authToken");
+
+  // checking if there are any auth token
+  if (!token) {
+    return;
+  }
+
+  try {
+    // validating the auth token
+    const res = await fetch(`${API_URL}/api/v1/auth/me`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    // if valid then redirect
+    if (res.ok) {
+      return;
+    }
+  } catch (err) {}
+
+  // else remove the auth token
+  const setCookie = await destroySession(session);
+
+  return new Response(JSON.stringify({ loggedOut: true }), {
+    status: 200,
+    headers: {
+      "Content-Type": "application/json",
+      "Set-Cookie": setCookie,
+    },
+  });
+}
 
 export async function action({ request }: Route.ActionArgs) {
   const data = await request.json();
@@ -64,12 +99,15 @@ export async function action({ request }: Route.ActionArgs) {
     const result = await response.json();
 
     if (!response.ok) {
-      return { error: result.detail || "Processing failed", errors: result.errors };
+      return {
+        formError: result.detail || "Processing failed",
+        fieldErrors: result.errors,
+      } satisfies ActionData;
     }
 
     // TODO: Handle result
   } catch (err) {
-    return { error: "Connection to server failed" };
+    return { formError: "Connection to server failed" } satisfies ActionData;
   }
 }
 
@@ -80,7 +118,7 @@ export function meta({}: Route.MetaArgs) {
 export default function App() {
   const navigation = useNavigation();
   const submit = useSubmit();
-  const actionData = useActionData();
+  const actionData = useActionData() as ActionData;
   const isSubmitting = navigation.state === "submitting";
 
   const form = useForm<RequestFormData>({
@@ -99,14 +137,14 @@ export default function App() {
   });
 
   useEffect(() => {
-    if (actionData?.errors) {
-      Object.entries(actionData.errors).forEach(([key, message]) => {
-        form.setError(key as keyof RequestFormData, {
-          type: "server",
-          message: message as string,
-        });
+    if (!actionData?.fieldErrors) return;
+
+    Object.entries(actionData.fieldErrors).forEach(([field, message]) => {
+      form.setError(field as keyof RequestFormData, {
+        type: "server",
+        message: message as string,
       });
-    }
+    });
   }, [actionData, form]);
 
   const onSubmit = async (data: RequestFormData) => {
@@ -122,13 +160,13 @@ export default function App() {
           <CardDescription>Download audio from YouTube</CardDescription>
         </CardHeader>
         <CardContent>
-          {actionData?.error && (
+          {actionData?.formError && (
             <Alert variant="destructive" className="mb-4">
-              <AlertDescription>{actionData.error}</AlertDescription>
+              <AlertDescription>{actionData.formError}</AlertDescription>
             </Alert>
           )}
 
-          <Form {...form}>
+          <UiForm {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               {/* YouTube URL */}
               <FormField
@@ -201,7 +239,7 @@ export default function App() {
                 )}
               </Button>
             </form>
-          </Form>
+          </UiForm>
         </CardContent>
       </Card>
     </div>
