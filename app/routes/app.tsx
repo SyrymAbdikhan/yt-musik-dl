@@ -36,10 +36,7 @@ const requestSchema = z.object({
     artist: z.string().min(1, "Artist is empty"),
     title: z.string().min(1, "Title is empty"),
   }),
-  dl_opts: z.object({
-    codec: z.null(),
-    bitrate: z.null(),
-  }),
+  dl_opts: z.object(),
 });
 
 type RequestFormData = z.infer<typeof requestSchema>;
@@ -49,10 +46,13 @@ type ActionData = {
   fieldErrors?: Partial<Record<keyof RequestFormData, string>>;
 };
 
-export async function loader({ request }: Route.LoaderArgs) {
-  const session = await getSession(request.headers.get("Cookie"));
-  const token = session.get("authToken");
+async function getCookies(request: Request) {
+  return await getSession(request.headers.get("Cookie"));
+}
 
+export async function loader({ request }: Route.LoaderArgs) {
+  const session = await getCookies(request);
+  const token = session.get("authToken");
   // checking if there are any auth token
   if (!token) {
     return;
@@ -74,7 +74,6 @@ export async function loader({ request }: Route.LoaderArgs) {
 
   // else remove the auth token
   const setCookie = await destroySession(session);
-
   return new Response(JSON.stringify({ loggedOut: true }), {
     status: 200,
     headers: {
@@ -85,15 +84,37 @@ export async function loader({ request }: Route.LoaderArgs) {
 }
 
 export async function action({ request }: Route.ActionArgs) {
+  const session = await getCookies(request);
+  const token = session.get("authToken");
+  // checking if there are any auth token
+  if (!token) {
+    return { formError: "Not Authenticated" } satisfies ActionData;
+  }
+
   const data = await request.json();
+  // validating form data
+  const parsed = requestSchema.safeParse(data);
+  // if data is invalid
+  if (!parsed.success) {
+    const { fieldErrors } = parsed.error.flatten((issue) => issue.message);
+    return {
+      fieldErrors: {
+        url: fieldErrors.url?.[0],
+        metadata: fieldErrors.metadata?.[0],
+        dl_opts: fieldErrors.dl_opts?.[0],
+      },
+    } satisfies ActionData;
+  }
 
   try {
-    const response = await fetch(`${API_URL}/api/process`, {
+    // sending process request to backend
+    const response = await fetch(`${API_URL}/api/v1/audio/process`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
       },
-      body: data,
+      body: JSON.stringify(parsed.data),
     });
 
     const result = await response.json();
@@ -129,10 +150,7 @@ export default function App() {
         artist: "",
         title: "",
       },
-      dl_opts: {
-        codec: null,
-        bitrate: null,
-      },
+      dl_opts: {},
     },
   });
 
@@ -149,7 +167,10 @@ export default function App() {
 
   const onSubmit = async (data: RequestFormData) => {
     form.clearErrors();
-    submit(data, { method: "post" });
+    submit(JSON.stringify(data), {
+      method: "post",
+      encType: "application/json",
+    });
   };
 
   return (
