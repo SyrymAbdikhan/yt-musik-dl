@@ -11,7 +11,7 @@ import {
   redirect,
 } from "react-router";
 import { useForm } from "react-hook-form";
-import { getSession, commitSession } from "~/sessions";
+import { getSession, commitSession, destroySession } from "~/sessions";
 
 import {
   Card,
@@ -22,7 +22,7 @@ import {
 } from "~/components/ui/card";
 import { Alert, AlertDescription } from "~/components/ui/alert";
 import {
-  Form,
+  Form as UiForm,
   FormField,
   FormItem,
   FormLabel,
@@ -42,12 +42,70 @@ const loginSchema = z.object({
 
 type LoginFormData = z.infer<typeof loginSchema>;
 
-export async function action({ request }: Route.ActionArgs) {
-  const formData = await request.formData();
-  const data = Object.fromEntries(formData);
-  const params = new URLSearchParams(data as Record<string, string>);
+type ActionData = {
+  formError?: string;
+  fieldErrors?: Partial<Record<keyof LoginFormData, string>>;
+}
+
+export async function loader({ request }: Route.LoaderArgs) {
+  const session = await getSession(request.headers.get("Cookie"));
+  const token = session.get("authToken");
+
+  // checking if there are any auth token
+  if (!token) { return; }
 
   try {
+    // validating the auth token
+    const res = await fetch(`${API_URL}/api/v1/auth/me`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    // if valid then redirect
+    if (res.ok) {
+      return redirect("/app");
+    }
+
+    // else remove the auth token
+    const headers = new Headers();
+    headers.append("Set-Cookie", await destroySession(session));
+
+    return new Response(JSON.stringify({ loggedOut: true }), {
+      status: 200,
+      headers: {
+        "Content-Type": "application/json",
+        "Set-Cookie": headers.get("Set-Cookie")!,
+      },
+    });
+  } catch { return; }
+}
+
+export async function action({ request }: Route.ActionArgs) {
+  const formData = await request.formData();
+  const raw = Object.fromEntries(formData);
+  // validating form data
+  const parsed = loginSchema.safeParse(raw);
+
+  // if data is invalid
+  if (!parsed.success) {
+    const { fieldErrors } = parsed.error.flatten((issue) => issue.message);
+    return {
+      fieldErrors: {
+        username: fieldErrors.username?.[0],
+        password: fieldErrors.password?.[0],
+      }
+    } satisfies ActionData;
+  }
+
+  const { username, password } = parsed.data;
+
+  try {
+    const params = new URLSearchParams();
+    params.set("username", username);
+    params.set("password", password);
+
+    // requesting auth token
     const response = await fetch(`${API_URL}/api/v1/auth/token`, {
       method: "POST",
       headers: {
@@ -57,21 +115,26 @@ export async function action({ request }: Route.ActionArgs) {
     });
 
     const result = await response.json();
-
+    // if something is not ok
     if (!response.ok) {
-      return { error: result.detail || "Login failed", errors: result.errors };
+      return {
+        formError: result.detail || "Login failed",
+        fieldErrors: result.errors
+      } satisfies ActionData;
     }
 
+    // setting the token
     const session = await getSession(request.headers.get("Cookie"));
-    session.set("authToken", result.token);
+    session.set("authToken", result.access_token);
 
+    // redirecting and passing the headers
     return redirect("/app", {
       headers: {
         "Set-Cookie": await commitSession(session),
       },
     });
   } catch (err) {
-    return { error: "Connection to server failed" };
+    return { formError: "Connection to server failed." } satisfies ActionData;
   }
 }
 
@@ -82,7 +145,7 @@ export function meta({}: Route.MetaArgs) {
 export default function Auth() {
   const navigation = useNavigation();
   const submit = useSubmit();
-  const actionData = useActionData();
+  const actionData = useActionData() as ActionData;
   const isSubmitting = navigation.state === "submitting";
 
   const form = useForm<LoginFormData>({
@@ -94,17 +157,17 @@ export default function Auth() {
   });
 
   useEffect(() => {
-    if (actionData?.errors) {
-      Object.entries(actionData.errors).forEach(([key, message]) => {
-        form.setError(key as keyof LoginFormData, {
-          type: "server",
-          message: message as string,
-        });
+    if (!actionData?.fieldErrors) return;
+
+    Object.entries(actionData.fieldErrors).forEach(([field, message]) => {
+      form.setError(field as keyof LoginFormData, {
+        type: "server",
+        message: message as string,
       });
-    }
+    });
   }, [actionData, form]);
 
-  const onSubmit = async (data: LoginFormData) => {
+  const onSubmit = (data: LoginFormData) => {
     form.clearErrors();
     submit(data, { method: "post" });
   };
@@ -117,14 +180,18 @@ export default function Auth() {
           <CardDescription>Only staff allowed to login</CardDescription>
         </CardHeader>
         <CardContent>
-          {actionData?.error && (
+          {actionData?.formError && (
             <Alert variant="destructive" className="mb-4">
-              <AlertDescription>{actionData.error}</AlertDescription>
+              <AlertDescription>{actionData.formError}</AlertDescription>
             </Alert>
           )}
 
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <UiForm {...form}>
+            <form
+              onSubmit={form.handleSubmit(onSubmit)}
+              className="space-y-4"
+              noValidate
+            >
               {/* Username */}
               <FormField
                 control={form.control}
@@ -174,7 +241,7 @@ export default function Auth() {
                 )}
               </Button>
             </form>
-          </Form>
+          </UiForm>
         </CardContent>
       </Card>
     </div>
