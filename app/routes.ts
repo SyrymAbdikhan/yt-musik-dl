@@ -12,4 +12,5 @@ export default [
     route("app", "routes/app.tsx"),
   ]),
   route("logout", "routes/logout.tsx"),
+  route("download/:fileId", "routes/download.tsx"),
 ] satisfies RouteConfig;

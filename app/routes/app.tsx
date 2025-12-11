@@ -44,6 +44,7 @@ type RequestFormData = z.infer<typeof requestSchema>;
 type ActionData = {
   formError?: string;
   fieldErrors?: Partial<Record<keyof RequestFormData, string>>;
+  fileId?: string;
 };
 
 async function getCookies(request: Request) {
@@ -126,7 +127,15 @@ export async function action({ request }: Route.ActionArgs) {
       } satisfies ActionData;
     }
 
-    // TODO: Handle result
+    // getting file id for future download
+    const fileId: string | undefined = result.file_id;
+    if (!fileId) {
+      return {
+        formError: "Something went wrong during the donwload process",
+      } satisfies ActionData;
+    }
+
+    return { fileId } satisfies ActionData;
   } catch (err) {
     return { formError: "Connection to server failed" } satisfies ActionData;
   }
@@ -164,6 +173,43 @@ export default function App() {
       });
     });
   }, [actionData, form]);
+
+  useEffect(() => {
+    if (!actionData?.fileId) return;
+
+    (async () => {
+      try {
+        // requesting the file
+        const res = await fetch(`/download/${actionData.fileId}`);
+        if (!res.ok) {
+          return;
+        }
+
+        // get filename from Content-Disposition if present
+        const disposition = res.headers.get("content-disposition") || "";
+        let filename = "audio.bin";
+        const match = disposition.match(/filename="?([^"]+)"?/i);
+        if (match?.[1]) {
+          filename = match[1];
+        }
+
+        // creating blob to download
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+
+        // downloading
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+      } catch (err) {
+        console.error("Download failed", err);
+      }
+    })();
+  }, [actionData?.fileId]);
 
   const onSubmit = async (data: RequestFormData) => {
     form.clearErrors();
