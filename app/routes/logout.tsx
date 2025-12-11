@@ -26,7 +26,7 @@ export function meta({}: Route.MetaArgs) {
 
 export default function Logout() {
   return (
-    <div className="h-screen flex justify-center">
+    <div className="h-screen flex justify-center items-center">
       <div className="max-w-[20rem] text-center">
         <h1 className="text-4xl mb-3">Logout</h1>
         <p className="mb-4 text-muted-foreground">
