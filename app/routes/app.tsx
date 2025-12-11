@@ -52,14 +52,6 @@ type ActionData = {
   fileId?: string;
 };
 
-export async function loader({ request }: Route.LoaderArgs) {
-  const result = await validateSession(request);
-  if (!result.isAuthenticated) {
-    return new Response(null, { headers: result.headers });
-  }
-  return null;
-}
-
 export async function action({ request }: Route.ActionArgs) {
   const result = await validateSession(request);
   if (!result.isAuthenticated || !result.token) {

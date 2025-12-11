@@ -1,11 +1,20 @@
 import type { Route } from "./+types/navbar";
-import { Link, Outlet, useLoaderData } from "react-router";
+import { Link, Outlet, redirect, useLoaderData } from "react-router";
 import { Button } from "~/components/ui/button";
 import { validateSession } from "~/lib/auth.server";
 
 export async function loader({ request }: Route.LoaderArgs) {
   const result = await validateSession(request);
-  return { isAuthenticated: result.isAuthenticated };
+
+  // if unauthenticated then redirect
+  if (!result.isAuthenticated) {
+    if (result.headers) {
+      return redirect("/login", { headers: result.headers });
+    }
+    return redirect("/login");
+  }
+
+  return result;
 }
 
 export default function Navbar() {
