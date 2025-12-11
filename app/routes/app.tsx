@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import type { Route } from "./+types/auth";
+import type { Route } from "./+types/app";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigation, useSubmit, useActionData } from "react-router";
