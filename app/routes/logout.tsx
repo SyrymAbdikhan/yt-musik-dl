@@ -1,15 +1,11 @@
 import type { Route } from "./+types/logout";
 import { redirect, Link } from "react-router";
-import { getSession, destroySession } from "~/sessions";
+import { getSessionCookies, destroySession } from "~/sessions";
 
 import { Button } from "~/components/ui/button";
 
-async function getCookies(request: Request) {
-  return await getSession(request.headers.get("Cookie"));
-}
-
 export async function loader({ request }: Route.LoaderArgs) {
-  const session = await getCookies(request);
+  const session = await getSessionCookies(request);
   const token = session.get("authToken");
   // checking if there are any auth token
   if (!token) {

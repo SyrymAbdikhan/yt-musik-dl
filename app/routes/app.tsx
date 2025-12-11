@@ -6,7 +6,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigation, useSubmit, useActionData } from "react-router";
 import { useForm } from "react-hook-form";
-import { destroySession, getSession } from "~/sessions";
+import { destroySession, getSessionCookies } from "~/sessions";
 
 import {
   Card,
@@ -47,12 +47,8 @@ type ActionData = {
   fileId?: string;
 };
 
-async function getCookies(request: Request) {
-  return await getSession(request.headers.get("Cookie"));
-}
-
 export async function loader({ request }: Route.LoaderArgs) {
-  const session = await getCookies(request);
+  const session = await getSessionCookies(request);
   const token = session.get("authToken");
   // checking if there are any auth token
   if (!token) {
@@ -85,7 +81,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 }
 
 export async function action({ request }: Route.ActionArgs) {
-  const session = await getCookies(request);
+  const session = await getSessionCookies(request);
   const token = session.get("authToken");
   // checking if there are any auth token
   if (!token) {

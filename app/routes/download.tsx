@@ -1,14 +1,10 @@
 import type { Route } from "./+types/download";
-import { getSession } from "~/sessions";
+import { getSessionCookies } from "~/sessions";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
-async function getCookies(request: Request) {
-  return await getSession(request.headers.get("Cookie"));
-}
-
 export async function loader({ params, request }: Route.LoaderArgs) {
-  const session = await getCookies(request);
+  const session = await getSessionCookies(request);
   const token = session.get("authToken");
 
   if (!token) {
@@ -20,11 +16,14 @@ export async function loader({ params, request }: Route.LoaderArgs) {
     return new Response("Missing file id", { status: 400 });
   }
 
-  const downloadRes = await fetch(`${API_URL}/api/v1/audio/download/${fileId}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
+  const downloadRes = await fetch(
+    `${API_URL}/api/v1/audio/download/${fileId}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
 
   if (!downloadRes.ok) {
     const errJson = await downloadRes.json().catch(() => ({}));

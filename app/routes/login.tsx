@@ -11,7 +11,7 @@ import {
   redirect,
 } from "react-router";
 import { useForm } from "react-hook-form";
-import { getSession, commitSession, destroySession } from "~/sessions";
+import { getSessionCookies, commitSession, destroySession } from "~/sessions";
 
 import {
   Card,
@@ -47,12 +47,8 @@ type ActionData = {
   fieldErrors?: Partial<Record<keyof LoginFormData, string>>;
 };
 
-async function getCookies(request: Request) {
-  return await getSession(request.headers.get("Cookie"));
-}
-
 export async function loader({ request }: Route.LoaderArgs) {
-  const session = await getCookies(request);
+  const session = await getSessionCookies(request);
   const token = session.get("authToken");
   // checking if there are any auth token
   if (!token) {
@@ -124,7 +120,7 @@ export async function action({ request }: Route.ActionArgs) {
     }
 
     // setting the token
-    const session = await getCookies(request);
+    const session = await getSessionCookies(request);
     session.set("authToken", result.access_token);
     // redirecting and passing the headers
     return redirect("/app", {
