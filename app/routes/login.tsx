@@ -11,7 +11,8 @@ import {
   redirect,
 } from "react-router";
 import { useForm } from "react-hook-form";
-import { getSessionCookies, commitSession, destroySession } from "~/sessions";
+import { commitSession } from "~/sessions";
+import { getSessionCookies, validateSession } from "~/lib/auth.server";
 
 import {
   Card,
@@ -48,36 +49,16 @@ type ActionData = {
 };
 
 export async function loader({ request }: Route.LoaderArgs) {
-  const session = await getSessionCookies(request);
-  const token = session.get("authToken");
-  // checking if there are any auth token
-  if (!token) {
-    return;
+  const result = await validateSession(request);
+  if (result.isAuthenticated) {
+    return redirect("/app");
   }
 
-  try {
-    // validating the auth token
-    const res = await fetch(`${API_URL}/api/v1/auth/me`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+  if (result.headers) {
+    return new Response(null, { headers: result.headers });
+  }
 
-    // if valid then redirect
-    if (res.ok) {
-      return redirect("/app");
-    }
-  } catch (err) {}
-
-  // else remove the auth token
-  const setCookie = await destroySession(session);
-  return new Response(JSON.stringify({ loggedOut: true }), {
-    status: 200,
-    headers: {
-      "Content-Type": "application/json",
-      "Set-Cookie": setCookie,
-    },
-  });
+  return null;
 }
 
 export async function action({ request }: Route.ActionArgs) {

@@ -1,11 +1,10 @@
 import type { Route } from "./+types/download";
-import { getSessionCookies } from "~/sessions";
+import { getSessionToken } from "~/lib/auth.server";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 export async function loader({ params, request }: Route.LoaderArgs) {
-  const session = await getSessionCookies(request);
-  const token = session.get("authToken");
+  const { token } = await getSessionToken(request);
 
   if (!token) {
     return new Response("Not authenticated", { status: 401 });

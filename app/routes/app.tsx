@@ -4,9 +4,14 @@ import { useEffect } from "react";
 import type { Route } from "./+types/app";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useNavigation, useSubmit, useActionData } from "react-router";
+import {
+  redirect,
+  useNavigation,
+  useSubmit,
+  useActionData,
+} from "react-router";
 import { useForm } from "react-hook-form";
-import { destroySession, getSessionCookies } from "~/sessions";
+import { validateSession } from "~/lib/auth.server";
 
 import {
   Card,
@@ -48,45 +53,19 @@ type ActionData = {
 };
 
 export async function loader({ request }: Route.LoaderArgs) {
-  const session = await getSessionCookies(request);
-  const token = session.get("authToken");
-  // checking if there are any auth token
-  if (!token) {
-    return;
+  const result = await validateSession(request);
+  if (!result.isAuthenticated) {
+    return new Response(null, { headers: result.headers });
   }
-
-  try {
-    // validating the auth token
-    const res = await fetch(`${API_URL}/api/v1/auth/me`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    // if valid then do nothing
-    if (res.ok) {
-      return;
-    }
-  } catch (err) {}
-
-  // else remove the auth token
-  const setCookie = await destroySession(session);
-  return new Response(JSON.stringify({ loggedOut: true }), {
-    status: 200,
-    headers: {
-      "Content-Type": "application/json",
-      "Set-Cookie": setCookie,
-    },
-  });
+  return null;
 }
 
 export async function action({ request }: Route.ActionArgs) {
-  const session = await getSessionCookies(request);
-  const token = session.get("authToken");
-  // checking if there are any auth token
-  if (!token) {
-    return { formError: "Not Authenticated" } satisfies ActionData;
+  const result = await validateSession(request);
+  if (!result.isAuthenticated || !result.token) {
+    return redirect("/login", { headers: result.headers });
   }
+  const token = result.token;
 
   const data = await request.json();
   // validating form data

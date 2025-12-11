@@ -14,7 +14,3 @@ export const { getSession, commitSession, destroySession } =
       maxAge: 60 * 60 * 24 * 7,
     },
   });
-
-export async function getSessionCookies(request: Request) {
-  return await getSession(request.headers.get("Cookie"));
-}

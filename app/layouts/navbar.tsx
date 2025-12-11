@@ -1,39 +1,11 @@
 import type { Route } from "./+types/navbar";
 import { Link, Outlet, useLoaderData } from "react-router";
 import { Button } from "~/components/ui/button";
-import { destroySession, getSessionCookies } from "~/sessions";
-
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+import { validateSession } from "~/lib/auth.server";
 
 export async function loader({ request }: Route.LoaderArgs) {
-  const session = await getSessionCookies(request);
-  const token = session.get("authToken");
-  // checking if there are any auth token
-  if (!token) {
-    return { isAuthenticated: false };
-  }
-
-  try {
-    // validating the auth token
-    const res = await fetch(`${API_URL}/api/v1/auth/me`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-
-    // if valid then return json
-    if (res.ok) {
-      return { isAuthenticated: true };
-    }
-  } catch (err) {}
-
-  // else remove the auth token
-  const setCookie = await destroySession(session);
-  return new Response(JSON.stringify({ loggedOut: true }), {
-    status: 200,
-    headers: {
-      "Content-Type": "application/json",
-      "Set-Cookie": setCookie,
-    },
-  });
+  const result = await validateSession(request);
+  return { isAuthenticated: result.isAuthenticated };
 }
 
 export default function Navbar() {
