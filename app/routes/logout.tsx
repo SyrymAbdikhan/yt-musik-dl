@@ -1,8 +1,5 @@
 import type { Route } from "./+types/logout";
-import {
-  redirect,
-  Link
-} from "react-router";
+import { redirect, Link } from "react-router";
 import { getSession, destroySession } from "~/sessions";
 
 import { Button } from "~/components/ui/button";
@@ -38,7 +35,7 @@ export default function Logout() {
       <div className="max-w-[20rem] text-center">
         <h1 className="text-4xl mb-3">Logout</h1>
         <p className="mb-4 text-muted-foreground">
-          If it did not redirect automatically <br/>
+          If it did not redirect automatically <br />
           then click the button below.
         </p>
         <Link to={"/"}>
