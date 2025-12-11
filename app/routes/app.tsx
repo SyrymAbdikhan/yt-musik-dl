@@ -63,7 +63,7 @@ export async function loader({ request }: Route.LoaderArgs) {
       },
     });
 
-    // if valid then redirect
+    // if valid then do nothing
     if (res.ok) {
       return;
     }
