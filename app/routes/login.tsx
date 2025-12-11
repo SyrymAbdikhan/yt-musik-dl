@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import type { Route } from "./+types/auth";
+import type { Route } from "./+types/login";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -141,7 +141,7 @@ export function meta({}: Route.MetaArgs) {
   return [{ title: "Login" }];
 }
 
-export default function Auth() {
+export default function Login() {
   const navigation = useNavigation();
   const submit = useSubmit();
   const actionData = useActionData() as ActionData;
