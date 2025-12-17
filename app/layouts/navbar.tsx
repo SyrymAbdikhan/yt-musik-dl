@@ -25,11 +25,11 @@ export default function Navbar() {
       <nav className="m-4 flex gap-4 justify-end items-center">
         {isAuthenticated ? (
           <Link to="/logout">
-            <Button>Logout</Button>
+            <Button className="cursor-pointer">Logout</Button>
           </Link>
         ) : (
           <Link to="/login">
-            <Button>Login</Button>
+            <Button className="cursor-pointer">Login</Button>
           </Link>
         )}
       </nav>
