@@ -189,17 +189,16 @@ export default function App() {
   return (
     <div className="h-full flex justify-center items-center">
       <Card className="max-w-sm w-full">
-        <CardHeader className="text-center">
+        <CardHeader>
           <CardTitle className="text-2xl">Request</CardTitle>
           <CardDescription>Download audio from YouTube</CardDescription>
-        </CardHeader>
-        <CardContent>
           {actionData?.formError && (
-            <Alert variant="destructive" className="mb-4">
+            <Alert variant="destructive">
               <AlertDescription>{actionData.formError}</AlertDescription>
             </Alert>
           )}
-
+        </CardHeader>
+        <CardContent>
           <UiForm {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               {/* YouTube URL */}
@@ -262,7 +261,11 @@ export default function App() {
                 )}
               />
 
-              <Button type="submit" className="w-full cursor-pointer" disabled={isSubmitting}>
+              <Button
+                type="submit"
+                className="w-full cursor-pointer"
+                disabled={isSubmitting}
+              >
                 {isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />

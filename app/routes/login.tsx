@@ -152,19 +152,18 @@ export default function Login() {
   };
 
   return (
-    <div className="h-screen flex justify-center items-center">
+    <div className="h-full flex justify-center items-center">
       <Card className="max-w-sm w-full">
-        <CardHeader className="text-center">
+        <CardHeader>
           <CardTitle className="text-2xl">Login</CardTitle>
-          <CardDescription>Only staff allowed to login</CardDescription>
-        </CardHeader>
-        <CardContent>
+          <CardDescription>Enter your username below to login to your account</CardDescription>
           {actionData?.formError && (
-            <Alert variant="destructive" className="mb-4">
+            <Alert variant="destructive">
               <AlertDescription>{actionData.formError}</AlertDescription>
             </Alert>
           )}
-
+        </CardHeader>
+        <CardContent>
           <UiForm {...form}>
             <form
               onSubmit={form.handleSubmit(onSubmit)}
