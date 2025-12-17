@@ -16,7 +16,7 @@ export default function Home() {
           Audio downloader from YouTube. <br />
           Please follow the link below to App.
         </p>
-        <Link to={"/login"}>
+        <Link to="/app">
           <Button className="cursor-pointer">Open App</Button>
         </Link>
       </div>

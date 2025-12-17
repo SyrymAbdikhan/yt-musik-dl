@@ -33,7 +33,7 @@ export default function Logout() {
           If it did not redirect automatically <br />
           then click the button below.
         </p>
-        <Link to={"/"}>
+        <Link to="/">
           <Button>Redirect</Button>
         </Link>
       </div>
