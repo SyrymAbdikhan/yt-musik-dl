@@ -15,4 +15,5 @@ export default [
   ]),
   route("logout", "routes/logout.tsx"),
   route("download/:fileId", "routes/download.tsx"),
+  route("action/set-theme", "routes/action.set-theme.ts"),
 ] satisfies RouteConfig;
