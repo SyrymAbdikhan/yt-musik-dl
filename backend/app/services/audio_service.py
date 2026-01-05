@@ -4,6 +4,7 @@ import logging
 from typing import Any
 from werkzeug.utils import secure_filename
 
+from app.core.config import config
 from app.schemas.audio import ProcessRequest
 from app.utils.helper import cleanup, sanitize
 
@@ -52,7 +53,12 @@ async def download_youtube(
     filepath_tmpl = os.path.join(output_folder, f"{file_id}.%(ext)s")
     filepath = None
 
-    ydl_opts = get_options(filepath_tmpl, metadata=metadata, **(dl_opts or {}))
+    ydl_opts = get_options(
+        filepath_tmpl,
+        metadata=metadata,
+        cookie_source=config.cookies_path,
+        **(dl_opts or {}),
+    )
     try:
         with YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=True)
@@ -112,7 +118,7 @@ def get_options(
             metadata_details += ["-metadata", f"{key}={value}"]
     ydl_opts["postprocessor_args"] += metadata_details
 
-    if cookie_source:
+    if os.path.exists(cookie_source):
         ydl_opts["cookiefile"] = cookie_source
 
     return ydl_opts
