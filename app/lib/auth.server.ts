@@ -1,6 +1,6 @@
 import { getSession, destroySession } from "~/sessions";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+const API_URL = process.env.API_URL!;
 
 export async function getSessionCookies(request: Request) {
   return await getSession(request.headers.get("Cookie"));

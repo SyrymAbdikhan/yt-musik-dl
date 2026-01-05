@@ -1,8 +1,9 @@
 import { createCookieSessionStorage } from "react-router";
 import { createThemeSessionResolver } from "remix-themes";
 
-const secret = import.meta.env.VITE_SESSION_SECRET || "default-dev-secret";
+const secret = process.env.SESSION_SECRET!;
 const isProduction = process.env.NODE_ENV === "production";
+const domain = process.env.SESSION_DOMAIN;
 
 const sessionStorage = createCookieSessionStorage({
   cookie: {
@@ -12,8 +13,8 @@ const sessionStorage = createCookieSessionStorage({
     sameSite: "lax",
     secrets: [secret],
     // Set domain and secure only if in production
-    ...(isProduction
-      ? { domain: "your-production-domain.com", secure: true }
+    ...(isProduction && domain
+      ? { domain, secure: true }
       : {}),
   },
 });

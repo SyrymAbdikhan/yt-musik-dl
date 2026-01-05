@@ -33,7 +33,7 @@ import { Input } from "~/components/ui/input";
 import { Button } from "~/components/ui/button";
 import { Loader2 } from "lucide-react";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+const API_URL = process.env.API_URL!;
 
 const requestSchema = z.object({
   url: z.url("A valid YouTube URL is required"),

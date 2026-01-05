@@ -1,7 +1,7 @@
 import type { Route } from "./+types/download";
 import { getSessionToken } from "~/lib/auth.server";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+const API_URL = process.env.API_URL!;
 
 export async function loader({ params, request }: Route.LoaderArgs) {
   const { token } = await getSessionToken(request);
