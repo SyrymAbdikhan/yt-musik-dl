@@ -34,8 +34,6 @@ import { Input } from "~/components/ui/input";
 import { Button } from "~/components/ui/button";
 import { Loader2 } from "lucide-react";
 
-const API_URL = process.env.API_URL!;
-
 const loginSchema = z.object({
   username: z.string().min(1, "Username is empty"),
   password: z.string().min(1, "Password is empty"),
@@ -62,6 +60,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 }
 
 export async function action({ request }: Route.ActionArgs) {
+  const API_URL = process.env.API_URL!;
   const data = await request.json();
   // validating form data
   const parsed = loginSchema.safeParse(data);

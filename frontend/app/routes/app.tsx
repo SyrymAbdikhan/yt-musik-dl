@@ -33,8 +33,6 @@ import { Input } from "~/components/ui/input";
 import { Button } from "~/components/ui/button";
 import { Loader2 } from "lucide-react";
 
-const API_URL = process.env.API_URL!;
-
 const requestSchema = z.object({
   url: z.url("A valid YouTube URL is required"),
   metadata: z.object({
@@ -53,6 +51,7 @@ type ActionData = {
 };
 
 export async function action({ request }: Route.ActionArgs) {
+  const API_URL = process.env.API_URL!;
   const result = await validateSession(request);
   if (!result.isAuthenticated || !result.token) {
     return redirect("/login", { headers: result.headers });
