@@ -1,0 +1,19 @@
+import {
+  type RouteConfig,
+  index,
+  layout,
+  route,
+} from "@react-router/dev/routes";
+
+export default [
+  index("routes/home.tsx"),
+  layout("layouts/navbar.tsx", [
+    route("login", "routes/login.tsx"),
+    layout("layouts/auth.tsx", [
+      route("app", "routes/app.tsx"),
+    ]),
+  ]),
+  route("logout", "routes/logout.tsx"),
+  route("download/:fileId", "routes/download.tsx"),
+  route("action/set-theme", "routes/action.set-theme.ts"),
+] satisfies RouteConfig;
