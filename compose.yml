@@ -5,6 +5,8 @@ services:
     restart: always
     networks:
       - ytdl
+    env_file:
+      - ./frontend/.env
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.ytdl-frontend.rule=(Host(`${HOST}`))"
@@ -18,6 +20,8 @@ services:
     restart: always
     networks:
       - ytdl
+    env_file:
+      - ./backend/.env
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.ytdl-backend.rule=(Host(`${HOST}`) && PathPrefix(`/api`))"
