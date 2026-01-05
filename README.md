@@ -102,10 +102,10 @@ Running **locally** mostly does not require cookies to download the audio. But i
 ## Images
 
 **Home page**
-<img src="https://i.ibb.co.com/RpJ2kcp8/Home.png">
+<img src="https://i.ibb.co.com/27GMSqTw/home.png">
 
 **Login page**
-<img src="https://i.ibb.co.com/dsw6rdj4/Login.png">
+<img src="https://i.ibb.co.com/LFpBqbM/login.png">
 
 **App page**
-<img src="https://i.ibb.co.com/j9kTt6Fx/App.png">
+<img src="https://i.ibb.co.com/ym7jBpdn/app.png">
