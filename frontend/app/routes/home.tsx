@@ -27,7 +27,7 @@ export default function Home() {
         </Button>
       </div>
       <div className="grow" />
-      <a className="text-blue-600 mb-6" href="https://github.com/SyrymAbdikhan/">View on Github</a>
+      <a className="text-blue-600 mb-6" href="https://github.com/SyrymAbdikhan/yt-musik-dl">View on Github</a>
     </div>
   );
 }
